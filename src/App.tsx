@@ -275,7 +275,9 @@ function App() {
       try {
         setIsLoading(true);
         setError(null);
-        if (process.env.REACT_APP_USE_MOCK_DATA === 'true') {
+
+        if (ENV_CONFIG.IS_DEVELOPMENT) {
+          // Development: use mock data
           const mockData = MockDataGenerator.generateMockData(50);
           setGraphData(mockData);
           setIsLoading(false);
@@ -287,8 +289,8 @@ function App() {
           return;
         }
 
-        // Fetch real data
-        const response = await fetch(process.env.REACT_APP_GRAPH_DATA_URL!);
+        // Production: fetch real data
+        const response = await fetch(ENV_CONFIG.GRAPH_DATA_URL);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -296,7 +298,6 @@ function App() {
         const parsedData = await GraphMLParser.parseGraphML(xmlData);
         setGraphData(parsedData);
 
-        // Center on first node after data loads
         setTimeout(() => {
           if (graphViewRef.current && parsedData.nodes.length > 0) {
             graphViewRef.current.centerNodeInView(parsedData.nodes[0]);
