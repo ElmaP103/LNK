@@ -7,6 +7,7 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import styled from 'styled-components';
 import { Node } from '../../../../types/global';
 import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
+import { ENV_CONFIG } from '../../../../core/config/constants';
 
 const DetailsPanel = styled(Paper)`
   width: 640px;
@@ -107,7 +108,7 @@ interface NodeDetailsProps {
 
 export const NodeDetails: React.FC<NodeDetailsProps> = ({ node, onClose, showMyConnectionsOnMap }) => {
   const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: 'AIzaSyBq487x823aFVTd6JDV3Lex7Fxn6rywtCk',
+    googleMapsApiKey: ENV_CONFIG.GOOGLE_MAPS_API_KEY,
   });
   const [markerPosition, setMarkerPosition] = React.useState<{ lat: number; lng: number } | null>(null);
   const [mapCenter, setMapCenter] = React.useState({ lat: 40.7128, lng: -74.0060 });

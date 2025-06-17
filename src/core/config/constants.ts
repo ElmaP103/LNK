@@ -25,4 +25,10 @@ export const SEARCH_CONFIG = {
 export const API_CONFIG = {
   BASE_URL: process.env.REACT_APP_API_URL || 'http://localhost:3000',
   TIMEOUT: 5000
+};
+
+export const ENV_CONFIG = {
+  GRAPH_DATA_URL: process.env.REACT_APP_GRAPH_DATA_URL || '/interesting_candidates_v5.graphml',
+  GOOGLE_MAPS_API_KEY: process.env.REACT_APP_GOOGLE_MAPS_API_KEY || '',
+  IS_DEVELOPMENT: process.env.NODE_ENV === 'development'
 }; 

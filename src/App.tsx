@@ -9,6 +9,8 @@ import styled from 'styled-components';
 import { Avatar, Typography, Switch, FormControlLabel, Box, Button } from '@mui/material';
 import { GraphView, GraphViewHandle } from './features/graph/components/GraphView';
 import { DetailsPanel } from './features/graph/components/DetailsPanel';
+import { ENV_CONFIG } from './core/config/constants';
+import { GraphMLParser } from './core/utils/parsers/graphMLParser';
 
 const AppContainer = styled.div`
   width: 100vw;
@@ -273,7 +275,7 @@ function App() {
       try {
         setIsLoading(true);
         setError(null);
-        if (process.env.NODE_ENV === 'development') {
+        if (ENV_CONFIG.IS_DEVELOPMENT) {
           const mockData = MockDataGenerator.generateMockData(50);
           setGraphData(mockData);
           setIsLoading(false);
@@ -284,8 +286,24 @@ function App() {
           }, 100);
           return;
         }
-        // ...fetch real data logic...
+
+        // Fetch real data
+        const response = await fetch(ENV_CONFIG.GRAPH_DATA_URL);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const xmlData = await response.text();
+        const parsedData = await GraphMLParser.parseGraphML(xmlData);
+        setGraphData(parsedData);
+        
+        // Center on first node after data loads
+        setTimeout(() => {
+          if (graphViewRef.current && parsedData.nodes.length > 0) {
+            graphViewRef.current.centerNodeInView(parsedData.nodes[0]);
+          }
+        }, 100);
       } catch (error) {
+        console.error('Error loading graph data:', error);
         setError('Failed to load graph data');
       } finally {
         setIsLoading(false);
