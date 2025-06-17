@@ -67,6 +67,7 @@ export const NetworkGraph = forwardRef<ForceGraphMethods<NodeObject<Node>, LinkO
   height
 }, ref) => {
   const fgRef = useRef<any>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Filter out non-person nodes and their connections
   const filteredData = React.useMemo<ForceGraphData>(() => {
@@ -103,11 +104,33 @@ export const NetworkGraph = forwardRef<ForceGraphMethods<NodeObject<Node>, LinkO
       const target = typeof selectedEdge.target === 'string'
         ? filteredData.nodes.find(n => n.id === selectedEdge.target)
         : selectedEdge.target as ExtendedNode;
+      
       if (source && target && source.x !== undefined && source.y !== undefined && target.x !== undefined && target.y !== undefined) {
+        // Calculate midpoint
         const midX = (source.x + target.x) / 2;
         const midY = (source.y + target.y) / 2;
+        
+        // Calculate distance between nodes
+        const dx = target.x - source.x;
+        const dy = target.y - source.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        // Calculate zoom level to fit both nodes in view
+        // Adjust these values to control the zoom level
+        const minZoom = 0.5;
+        const maxZoom = 2;
+        const zoomLevel = Math.min(maxZoom, Math.max(minZoom, 1.5 * (400 / distance)));
+        
+        // Center on midpoint with animation
         ref.current.centerAt(midX, midY, 1000);
-        ref.current.zoom(2, 1000);
+        
+        // Apply zoom with animation
+        const graphRef = ref.current;
+        setTimeout(() => {
+          if (graphRef) {
+            graphRef.zoom(zoomLevel, 1000);
+          }
+        }, 100);
       }
     }
   }, [selectedEdge, filteredData.nodes, ref]);
@@ -126,23 +149,23 @@ export const NetworkGraph = forwardRef<ForceGraphMethods<NodeObject<Node>, LinkO
     }
   }, [onNodeClick]);
 
-  const handleNodeHover = useCallback((node: Node | null, event?: MouseEvent) => {
-    if (node && event) {
-      // @ts-ignore
-      window.__nodeTooltip = { name: node.data.name, x: event.clientX + 12, y: event.clientY - 8 };
+  const handleNodeHover = useCallback((node: NodeObject<Node> | null, previousNode: NodeObject<Node> | null) => {
+    if (node) {
+
+       if (onNodeHoverTooltip) {
+        const rect = containerRef.current?.getBoundingClientRect();
+        if (rect && fgRef.current) {
+          const { x, y } = fgRef.current.graph2ScreenCoords((node as any).x, (node as any).y);
+          onNodeHoverTooltip(node as Node, { x: rect.left + x, y: rect.top + y });
+        }
+      }
     } else {
-      // @ts-ignore
-      window.__nodeTooltip = null;
-    }
-    if (onNodeHoverTooltip) {
-      if (node && event) {
-        onNodeHoverTooltip(node, { x: event.clientX, y: event.clientY });
-      } else {
+      if (onNodeHoverTooltip) {
         onNodeHoverTooltip(null, null);
       }
     }
     if (onNodeHover) {
-      onNodeHover(node);
+      onNodeHover(node as Node | null);
     }
   }, [onNodeHover, onNodeHoverTooltip]);
 
@@ -183,7 +206,7 @@ export const NetworkGraph = forwardRef<ForceGraphMethods<NodeObject<Node>, LinkO
   }, [filteredData.nodes]);
 
   return (
-    <GraphContainer>
+    <GraphContainer ref={containerRef}>
       <ForceGraph2D
         ref={((node: ForceGraphMethods<any, any> | null) => {
           fgRef.current = node;
@@ -295,14 +318,14 @@ export const NetworkGraph = forwardRef<ForceGraphMethods<NodeObject<Node>, LinkO
           }
           return 1.2;
         }}
-        linkDirectionalParticles={8}
-        linkDirectionalParticleSpeed={0.02}
+        linkDirectionalParticles={2}
+        linkDirectionalParticleSpeed={0.005}
         linkDirectionalParticleWidth={2}
         linkDirectionalParticleColor={() => '#FFD700'}
         linkCurvature={0.25}
         linkLabel={linkLabel}
         onNodeClick={handleNodeClick}
-        onNodeHover={(node, event) => handleNodeHover(node, event && typeof event === 'object' && 'clientX' in event && 'clientY' in event ? (event as unknown as MouseEvent) : undefined)}
+        onNodeHover={handleNodeHover}
         onLinkHover={handleEdgeHover}
         onLinkClick={handleEdgeClick}
         cooldownTicks={200}

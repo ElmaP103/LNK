@@ -295,7 +295,7 @@ function App() {
         const xmlData = await response.text();
         const parsedData = await GraphMLParser.parseGraphML(xmlData);
         setGraphData(parsedData);
-        
+
         // Center on first node after data loads
         setTimeout(() => {
           if (graphViewRef.current && parsedData.nodes.length > 0) {
@@ -370,7 +370,7 @@ function App() {
       .slice(0, 10);
     setSearchResults(results);
   };
-  
+
   const handleSearchResult = (result: SearchResult) => {
     const node = graphData.nodes.find(n => n.id === result.id);
     if (node) {
@@ -382,7 +382,6 @@ function App() {
           if (graph) {
             graph.emit('resize');
           }
-          // graphViewRef.current.centerNodeInView(node, visibleWidth, visibleHeight);
         }
       });
     }
@@ -394,13 +393,10 @@ function App() {
     setShowDetails(true);
     runAfterNextFrame(() => {
       if (graphViewRef.current && graphAreaDivRef.current) {
-        const visibleWidth = graphAreaDivRef.current.clientWidth;
-        const visibleHeight = graphAreaDivRef.current.clientHeight;
         const graph = (graphViewRef.current as any).graph;
         if (graph) {
           graph.emit('resize');
         }
-        graphViewRef.current.centerNodeInView(node, visibleWidth, visibleHeight);
       }
     });
   };
@@ -408,16 +404,30 @@ function App() {
   const handleEdgeClick = (edge: Edge) => {
     setSelectedEdge(edge);
     setSelectedNode(null);
-    // Center on the source node after a short delay
+
+    // Get source and target nodes
     const sourceNode = typeof edge.source === 'string'
       ? graphData.nodes.find(n => n.id === edge.source)
       : edge.source;
-    if (sourceNode) {
+    const targetNode = typeof edge.target === 'string'
+      ? graphData.nodes.find(n => n.id === edge.target)
+      : edge.target;
+
+    if (sourceNode && targetNode) {
+      // Create a virtual center node
+      const centerNode = {
+        ...sourceNode,
+        id: 'center',
+        x: (sourceNode.x! + targetNode.x!) / 2,
+        y: (sourceNode.y! + targetNode.y!) / 2
+      };
+
+      // Use the existing centering logic with our virtual node
       setTimeout(() => {
         if (graphViewRef.current && graphAreaDivRef.current) {
           const visibleWidth = graphAreaDivRef.current.clientWidth;
           const visibleHeight = graphAreaDivRef.current.clientHeight;
-          graphViewRef.current.centerNodeInView(sourceNode, visibleWidth, visibleHeight);
+          graphViewRef.current.centerNodeInView(centerNode, visibleWidth, visibleHeight);
         }
       }, 100);
     }
@@ -571,13 +581,16 @@ function App() {
           top: hoveredNodePos.y + 12,
           background: 'rgba(30,30,30,0.95)',
           color: '#fff',
-          padding: '6px 14px',
-          borderRadius: 6,
+          padding: '12px 16px',
+          borderRadius: 8,
           pointerEvents: 'none',
           zIndex: 9999,
-          fontSize: 15,
+          fontSize: 14,
           fontWeight: 500,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.18)'
+          boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
+          maxWidth: '300px',
+          whiteSpace: 'pre-line',
+          lineHeight: 1.5
         }}>
           {hoveredNode.data?.name || hoveredNode.label}
         </div>
