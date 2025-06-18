@@ -276,7 +276,7 @@ function App() {
         setIsLoading(true);
         setError(null);
 
-        if (ENV_CONFIG.IS_DEVELOPMENT) {
+        if (process.env.REACT_APP_USE_MOCK_DATA === 'true') {
           // Development: use mock data
           const mockData = MockDataGenerator.generateMockData(50);
           setGraphData(mockData);
@@ -290,7 +290,7 @@ function App() {
         }
 
         // Production: fetch real data
-        const response = await fetch(ENV_CONFIG.GRAPH_DATA_URL);
+        const response = await fetch(process.env.REACT_APP_GRAPH_DATA_URL!);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
