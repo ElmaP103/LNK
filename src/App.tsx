@@ -276,7 +276,7 @@ function App() {
         setIsLoading(true);
         setError(null);
 
-        if (process.env.REACT_APP_USE_MOCK_DATA === 'true') {
+        if (process.env.REACT_APP_USE_MOCK_DATA === 'true' || ENV_CONFIG.IS_DEVELOPMENT) {
           // Development: use mock data
           const mockData = MockDataGenerator.generateMockData(50);
           setGraphData(mockData);
